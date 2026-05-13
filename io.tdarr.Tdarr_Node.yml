@@ -1,0 +1,107 @@
+app-id: io.tdarr.Tdarr_Node
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: tdarr-node-flatpak
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=xdg-videos
+  - --talk-name=org.kde.StatusNotifierWatcher
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/doc
+  - /share/gtk-doc
+  - /share/man
+
+modules:
+  - shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
+  - name: leptonica
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+    sources:
+      - type: archive
+        url: https://github.com/DanBloomberg/leptonica/releases/download/1.79.0/leptonica-1.79.0.tar.gz
+        sha256: 045966c9c5d60ebded314a9931007a56d9d2f7a6ac39cb5cc077c816f62300d8
+    cleanup:
+      - /bin
+
+  - name: tesseract
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+      - --disable-graphics
+      - --disable-opencl
+    sources:
+      - type: archive
+        url: https://github.com/tesseract-ocr/tesseract/archive/refs/tags/4.1.1.tar.gz
+        sha256: 2a66ff0d8595bff8f04032165e6c936389b1e5727c3ce5a27b3e059d218db1cb
+      - type: patch
+        path: patches/tesseract-4.1.1-flatpak-build.patch
+    cleanup:
+      - /bin
+      - /share/tessdata
+
+  - name: perl
+    buildsystem: simple
+    build-commands:
+      - ./Configure -des -Dprefix=/app -Dvendorprefix=/app -Dsiteprefix=/app -Duseshrplib -Duseithreads -Duselargefiles -Dman1dir=none -Dman3dir=none
+      - make -j${FLATPAK_BUILDER_N_JOBS}
+      - make install
+      - find /app/lib/perl5 -type f -exec chmod u+w {} \;
+      - install -Dm755 perl /app/bin/perl
+    sources:
+      - type: archive
+        url: https://www.cpan.org/src/5.0/perl-5.42.2.tar.xz
+        sha256: 0a585eeb9e363c0f80482ddb3571625250c2c86aeb408853e8ea50805cfb14bb
+    cleanup:
+      - /share
+
+  - name: tdarr-node
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/tdarr/node
+      - cp -a tdarr-node/. /app/tdarr/node/
+      - chmod +x /app/tdarr/node/Tdarr_Node
+      - chmod +x /app/tdarr/node/Tdarr_Node_Tray
+      - chmod +x /app/tdarr/node/runtime/Tdarr_Node_Runtime
+      - chmod +x /app/tdarr/node/runtime/pnpm
+      - chmod +x /app/tdarr/node/node_modules/exiftool-vendored.pl/bin/exiftool
+      - mkdir -p /app/bin
+      - ln -sf /app/tdarr/node/Tdarr_Node_Tray /app/bin/tdarr-node-flatpak
+      - install -Dm644 integration/io.tdarr.Tdarr_Node.desktop /app/share/applications/io.tdarr.Tdarr_Node.desktop
+      - install -Dm644 integration/io.tdarr.Tdarr_Node.metainfo.xml /app/share/metainfo/io.tdarr.Tdarr_Node.metainfo.xml
+      - install -Dm644 integration/logo512.png /app/share/icons/hicolor/512x512/apps/io.tdarr.Tdarr_Node.png
+      - install -Dm644 integration/LICENSE.md /app/share/licenses/io.tdarr.Tdarr_Node/LICENSE.md
+    sources:
+      - type: archive
+        url: https://storage.tdarr.io/versions/2.73.01/linux_x64/Tdarr_Node.zip
+        sha256: b97db23f2195a4f9f9438f1c3536c440c88cb112da68e8880b932037d00fdfb0
+        strip-components: 0
+        dest: tdarr-node
+      - type: file
+        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/6fe94f3d6916310e27c232ebd34910d7f7773ff0/flatpak/io.tdarr.Tdarr_Node.desktop
+        sha256: 27fb6d8ac9a6be9c43cb7596542cb47eb8df2fbe94466770cd9f107781718618
+        dest: integration
+      - type: file
+        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/6fe94f3d6916310e27c232ebd34910d7f7773ff0/flatpak/io.tdarr.Tdarr_Node.metainfo.xml
+        sha256: 0fda1d4f9de83aa70a97fd2868036eac5e9a59f951d36f48200c3468eb6f0896
+        dest: integration
+      - type: file
+        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/6fe94f3d6916310e27c232ebd34910d7f7773ff0/flatpak/io.tdarr.Tdarr_Node.png
+        sha256: 91106d113a447207ac83e5aabc930fc7d782ddac7c63e8966dce99e7c826bcbc
+        dest: integration
+        dest-filename: logo512.png
+      - type: file
+        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/0ce823ca459e1a1a079c096506691cad801237bf/LICENSE.md
+        sha256: 0dede92d4421de2668e268783a03c5834078f81a8c694f59900e43a40528c4cf
+        dest: integration
+        dest-filename: LICENSE.md
