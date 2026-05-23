@@ -96,8 +96,8 @@ modules:
         sha256: 0fda1d4f9de83aa70a97fd2868036eac5e9a59f951d36f48200c3468eb6f0896
         dest: integration
       - type: file
-        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/6fe94f3d6916310e27c232ebd34910d7f7773ff0/flatpak/io.tdarr.Tdarr_Node.png
-        sha256: 91106d113a447207ac83e5aabc930fc7d782ddac7c63e8966dce99e7c826bcbc
+        url: https://raw.githubusercontent.com/HaveAGitGat/Tdarr/2ee6e059ffe01e463d25990eb94818925c5b04f5/flatpak/io.tdarr.Tdarr_Node.png
+        sha256: 62cf160aebb01668d038714003f7866cd23c0c92d1eb1bc57bc2acc68c74865b
         dest: integration
         dest-filename: logo512.png
       - type: file
